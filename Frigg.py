@@ -19,35 +19,38 @@ def load_data(file_path):
     mpd = pd.read_excel(file_path, sheet_name="MPD", skiprows=2)
     return mpd
 
-def loki(table):
+def loki():
+    file_path = 'data/MPDA320_R49_I00.xls'
+    mpd = load_data(file_path)
     conditionColumn = []
-    conditionList = []
 
-    for value in table['APPLICABILITY'].apply(str):
+    for value in mpd['APPLICABILITY'].apply(str):
         cut = re.split(r'\bOR\b', value)
-        condition = []
+        conditionList =[]
 
-        for i in cut:
-            clean_i = re.split(r' |\n', i.strip())  # Split by spaces and newlines, remove extra spaces
-            condition.extend(clean_i)
+        if len(cut) == 1:
+            clean_cut = re.split(r' |\n', cut[0].strip())  # Split by spaces and newlines
+            clean_cut = [x for x in clean_cut if re.search(r'\w', x)]  # Keep only elements with text/numbers
+            if clean_cut:  # Ensure non-empty lists are added
+                    conditionList.append(clean_cut)
+            conditionColumn.append(conditionList if conditionList else None)  # Avoid empty sublists
 
-        # Append the condition list to the new column list
-        cleaned_list = [item for item in condition if item.strip()]
-        conditionColumn.append(cleaned_list)
-
-        # Store unique configurations
-        if cleaned_list not in conditionList:
-            conditionList.append(cleaned_list)
+        else:
+            for i in cut:
+                clean_i = re.split(r' |\n', i.strip())  # Split by spaces and newlines
+                clean_i = [x for x in clean_i if re.search(r'\w', x)]  # Keep only elements with text/numbers
+                if clean_i:  # Ensure non-empty lists are added
+                    conditionList.append(clean_i)
+            conditionColumn.append(conditionList if conditionList else None)  # Avoid empty sublists
 
     # Assign the condition lists to a new column in the DataFrame
-    table['condition'] = conditionColumn
+    mpd['condition'] = conditionColumn
+    #print(mpd['condition'])
 
-    print(table['condition'])
-    table.to_excel("table.xlsx")
+    #print(table['condition'])
+    #mpd.to_excel("table.xlsx")
+    return mpd
 
 # Main script execution
 if __name__ == "__main__":
-    file_path = 'data/MPDA320_R49_I00.xls'
-    mpd = load_data(file_path)
-    #print(mpd.head(20))
-    loki(mpd)
+    loki()

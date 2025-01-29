@@ -7,14 +7,11 @@
 # Import required functions
 from flask import Flask, request, redirect, url_for, render_template, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from Thor import aircraftDAO
+from Thor import dataDAO
 from Frigg import initalizeDBDAO
 
 # Initalising Database
-initalizeDBDAO.checkAndDropDB()
-initalizeDBDAO.createDB()
-initalizeDBDAO.createTable()
-initalizeDBDAO.populateTable()
+
 
 
 #########################################################################################
@@ -42,7 +39,7 @@ users = {
 def serveLogin():
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('aircraft.html')
+    return render_template('home.html')
 
 #########################################################################################
 @app.route('/login', methods=['GET', 'POST'])
@@ -64,7 +61,7 @@ def login():
             session['username'] = username
             flash('You were successfully logged in', 'success')
             # Redirect to the aircraft page
-            return redirect(url_for('aircraftPage'))
+            return redirect(url_for('homePage'))
         else:
             # Flash an error message if credentials are invalid
             flash('Invalid username or password', 'danger')
@@ -87,8 +84,8 @@ def logout():
     # Redirect to the login page
     return redirect(url_for('login'))
 
-@app.route('/aircraft')
-def aircraftPage():
+@app.route('/home')
+def homePage():
 
     # Display the aircraft management page.
     # If the user is not logged in, redirect to the login page.
@@ -97,9 +94,9 @@ def aircraftPage():
         # If the user is not logged in, redirect to the login page
         return redirect(url_for('login'))
     # Render the aircraft management page
-    return render_template('aircraft.html')
+    return render_template('home.html')
 
-@app.route('/aircraftdata', methods=['GET'])
+@app.route('/homeData', methods=['GET'])
 def get_aircraft_data():
 
     #  Provide JSON data of all aircraft.
@@ -109,28 +106,33 @@ def get_aircraft_data():
         return redirect(url_for('login'))
     
     # Fetch all aircraft data from the database
-    aircraftList = aircraftDAO.getAll()
+    taskList = dataDAO.getAll()
 
     # converting a it to a list of dictionaries from a list
-    aircraftData = []
-    for aircraft in aircraftList:
-        aircraftDict = {
-            "aircraft_id": aircraft[0],
-            "model_name": aircraft[1],
-            "manufacturer": aircraft[2],
-            "aircraft_serial_number": aircraft[3],
-            "configuration": aircraft[4],
-            "last_flight": aircraft[5],
-            "certificate_of_airworthiness": aircraft[6],
-            "country_of_origin": aircraft[7],
-            "country_of_registration": aircraft[8],
-            "engine_type": aircraft[9]
+    mpdData = []
+    for task in taskList:
+        taskDict = {
+            "TASK\nNUMBER": task[0],
+            "SOURCE TASK\nREFERENCE": task[1],
+            "ACCESS": task[2],
+            "PREPARATION": task[3],
+            "ZONE": task[4],
+            "DESCRIPTION": task[5],
+            "TASK CODE": task[6],
+            "SAMPLE\nTHRESHOLD": task[7],
+            "SAMPLE\nINTERVAL": task[8],
+            "100%\nTHRESHOLD": task[9],
+            "SAMPLE\nINTERVAL": task[10],
+            "100%\nINTERVAL": task[11],
+            "SOURCE": task[12],
+            "REFERENCE": task[12],
+            "APPLICABILITY": task[12],
+            "SOURCE": task[12],
         }
-        aircraftData.append(aircraftDict)
+        mpdData.append(taskDict)
 
     # Return the data in JSON format
-    return jsonify(aircraftData)
-
+    return jsonify(mpdData)
 
 #########################################################################################
 #########################################################################################

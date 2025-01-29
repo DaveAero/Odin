@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AMP Applicabilities</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid black;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+        </style>
+    </head> 
+<body>
+    <div class="container"></div>
+        <button class="btn btn-danger logout-btn" onclick="logout()">Logout</button>
+        <h1>mpd Table<h1>
+        <div>
+            <table class="table" id="mpd">
+            <tr>
+                <th>TASK NUMBER</th>
+                <th>SOURCE TASK REFERENCE</th>
+                <th>ACCESS</th>
+                <th>PREPARATION</th>
+                <th>ZONE</th>
+                <th>DESCRIPTION</th>
+                <th>TASK CODE</th>
+                <th>SAMPLE THRESHOLD</th>
+                <th>SAMPLE INTERVAL</th>
+                <th>100% THRESHOLD</th>
+                <th>100% INTERVAL</th>
+                <th>SOURCE</th>
+                <th>REFERENCE</th>
+                <th>APPLICABILITY</th>
+            </tr>
+            </table>
+        </div>
+    </div>
+</body>
+
+<script>
+    function showViewAll(){
+        document.getElementById('mpdTable').style.display="block"
+    }
+
+    function addToMPD(aircraft){
+        var tableElement = document.getElementById('mpdTable')
+        var rowElement = tableElement.insertRow(-1)
+        rowElement.setAttribute('taskNumber', task.taskNumber)
+
+        var cell1 = rowElement.insertCell(0);
+        cell1.innerHTML = task.taskNumber
+        var cell2 = rowElement.insertCell(1);
+        cell2.innerHTML = task.sourceTaskReference
+        var cell3 = rowElement.insertCell(2);
+        cell3.innerHTML = task.access
+        var cell4 = rowElement.insertCell(3);
+        cell4.innerHTML = task.preparation
+        var cell5 = rowElement.insertCell(4);
+        cell5.innerHTML = task.zone
+        var cell6 = rowElement.insertCell(5);
+        cell6.innerHTML = task.description
+        var cell7 = rowElement.insertCell(6);
+        cell7.innerHTML = task.taskCode
+        var cell8 = rowElement.insertCell(7);
+        cell8.innerHTML = task.sampleThreshold
+        var cell9 = rowElement.insertCell(8);
+        cell9.innerHTML = task.sampleInterval
+        var cell10 = rowElement.insertCell(9);
+        cell10.innerHTML = task.treshold
+        var cell11 = rowElement.insertCell(10);
+        cell11.innerHTML = task.interval
+        var cell12 = rowElement.insertCell(11);
+        cell12.innerHTML = task.source
+        var cell13 = rowElement.insertCell(12);
+        cell13.innerHTML = task.reference
+        var cell14 = rowElement.insertCell(13);
+        cell14.innerHTML = task.applicability
+    }
+
+    function logout() {
+            $.ajax({
+                url: "/logout",
+                method: "GET",
+                success: function() {
+                    // Redirect to the login page after successful logout
+                    window.location.href = "/login";
+                },
+                error: function(xhr, status, error) {
+                    console.log("Logout error: " + status + " " + error);
+                }
+            });
+        }
+
+    function getAllAjax(){
+        $.ajax({
+            "url": "/homeData",
+            "method":"GET",
+            "data":"",
+            "dataType": "JSON",
+            "success":function(result){
+                console.log(result);
+                for (task of result){
+                    addToMPD(task);
+                }
+            },
+            "error":function(xhr,status,error){
+                console.log("error: "+status+" msg:"+error);
+            }
+        });
+    }
+
+</script>
+</html>
