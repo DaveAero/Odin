@@ -7,8 +7,8 @@
 # Import required functions
 from flask import Flask, request, redirect, url_for, render_template, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from Thor import dataDAO
-from Frigg import initalizeDBDAO
+from Thor import taskDAO
+import pandas as pd
 
 # Initalising Database
 
@@ -106,32 +106,41 @@ def get_aircraft_data():
         return redirect(url_for('login'))
     
     # Fetch all aircraft data from the database
-    taskList = dataDAO.getAll()
+    taskList = pd.DataFrame(taskDAO.getAll())
+    #print("taskList:{}".format(taskList["TASK\nNUMBER"]))
 
     # converting a it to a list of dictionaries from a list
     mpdData = []
-    for task in taskList:
+    for index, task in taskList.iterrows():
+        #print("task:{}. index:{}".format(task["TASK\nNUMBER"], index))
         taskDict = {
-            "TASK\nNUMBER": task[0],
-            "SOURCE TASK\nREFERENCE": task[1],
-            "ACCESS": task[2],
-            "PREPARATION": task[3],
-            "ZONE": task[4],
-            "DESCRIPTION": task[5],
-            "TASK CODE": task[6],
-            "SAMPLE\nTHRESHOLD": task[7],
-            "SAMPLE\nINTERVAL": task[8],
-            "100%\nTHRESHOLD": task[9],
-            "SAMPLE\nINTERVAL": task[10],
-            "100%\nINTERVAL": task[11],
-            "SOURCE": task[12],
-            "REFERENCE": task[12],
-            "APPLICABILITY": task[12],
-            "SOURCE": task[12],
+            "TASKNUMBER": task["TASK\nNUMBER"],
+            "SOURCETASK": task["SOURCE TASK\nREFERENCE"],
+            "ACCESS": task["ACCESS"],
+            "PREPARATION": task["PREPARATION"],
+            "ZONE": task["ZONE"],
+            "DESCRIPTION": task["DESCRIPTION"],
+            "TASKCODE": task["TASK CODE"],
+            "SAMPLETHRES": task["SAMPLE\nTHRESHOLD"],
+            "SAMPLEINT": task["SAMPLE\nINTERVAL"],
+            "100%THRES": task["100%\nTHRESHOLD"],
+            "100%INT": task["100%\nINTERVAL"],
+            "SOURCE": task["SOURCE"],
+            "REFERENCE": task["REFERENCE"],
+            "APPLICABILITY": task["APPLICABILITY"]
         }
+
+        # Convert NaN to None (so JSON treats it as 'null')
+        for key, value in taskDict.items():
+            if pd.isna(value):  # Check for NaN values
+                taskDict[key] = None  # Convert to None
+
+
         mpdData.append(taskDict)
 
     # Return the data in JSON format
+    #print(mpdData)
+    #print("Jsonify:{}".format(jsonify(mpdData)))
     return jsonify(mpdData)
 
 #########################################################################################
@@ -161,7 +170,7 @@ def createAircraft():
         "engine_type": request.json.get("engine_type"),
     }
     # Insert the new aircraft into the database using DAO. The my DAO server will return the aircraft id
-    aircraftID = aircraftDAO.create(tuple(aircraft.values()))
+    aircraftID = taskDAO.create(tuple(aircraft.values()))
     # Getting the aircraft id from the update mysql 
     aircraft["aircraft_id"] = aircraftID
     # Return the new aircraft in JSON format
@@ -175,7 +184,7 @@ def findAircraftById(id):
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    aircraft = aircraftDAO.findByID(id)
+    aircraft = taskDAO.findByID(id)
     if aircraft is None:
         return jsonify({}), 204
     return jsonify(aircraft)  
@@ -193,7 +202,7 @@ def updateAircraft(id):
         return redirect(url_for('login'))
     
     # Getting current aircraft data from the mysql server
-    aircraft = aircraftDAO.findByID(id)
+    aircraft = taskDAO.findByID(id)
     if aircraft is None:
         return jsonify({}), 404
     
@@ -232,8 +241,8 @@ def updateAircraft(id):
     updated_aircraft = tuple(foundAircraft.values())
 
     # Pass the tuple to the update method
-    print(updated_aircraft)
-    aircraftDAO.update(updated_aircraft)
+    #print(updated_aircraft)
+    taskDAO.update(updated_aircraft)
     
     return jsonify(foundAircraft)
 
@@ -248,12 +257,12 @@ def deleteAircraft(id):
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    aircraft = aircraftDAO.findByID(id)
+    aircraft = taskDAO.findByID(id)
     if aircraft is None:
         return jsonify({}), 404
     
     # Delete the aircraft from the database using DAO
-    aircraftDAO.delete(id)
+    taskDAO.delete(id)
     # Return a success message
     return jsonify({"status": "success"}), 200
 

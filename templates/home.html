@@ -4,122 +4,142 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AMP Applicabilities</title>
+        <title>AMPER</title>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
         <style>
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 11px; /* Reduce text size */
+            }
+            .container {
+                max-width: 100%; /* Ensure it fits */
+                padding: 20px;
+            }
             table {
-                width: 100%;
+                width: fit-content(70%); /* Reduce table width */
+                margin: auto;
                 border-collapse: collapse;
+                font-size: 11px; /* Smaller text for better fit */
             }
             th, td {
-                border: 1px solid black;
-                padding: 8px;
-                text-align: left;
+                border: 1px solid black; /* Adds border to all cells */
+                padding: 5px;
+                text-align: center;
+                vertical-align: middle;
+                white-space: nowrap; /* Prevents text wrapping */
+                word-wrap: break-word;
+                white-space: normal; /* Allows text wrapping */
             }
             th {
                 background-color: #f2f2f2;
             }
+            .table-container {
+                max-width: 100%;
+                overflow-x: visible;
+                display: flex;
+                justify-content: center;
+            }
+            h2 {
+                text-align: center;
+            }
+            /* Column width percentage distribution */
+            th:nth-child(1), td:nth-child(1) { width: 8%; }  /* TASK NUMBER */
+            th:nth-child(2), td:nth-child(2) { width: 10%; } /* SOURCE TASK REFERENCE */
+            th:nth-child(3), td:nth-child(3) { width: 8%; }  /* ACCESS */
+            th:nth-child(4), td:nth-child(4) { width: 10%; } /* PREPARATION */
+            th:nth-child(5), td:nth-child(5) { width: 8%; }  /* ZONE */
+            th:nth-child(6), td:nth-child(6) { width: 15%; } /* DESCRIPTION */
+            th:nth-child(7), td:nth-child(7) { width: 8%; }  /* TASK CODE */
+            th:nth-child(8), td:nth-child(8) { width: 8%; }  /* SAMPLE THRESHOLD */
+            th:nth-child(9), td:nth-child(9) { width: 8%; }  /* SAMPLE INTERVAL */
+            th:nth-child(10), td:nth-child(10) { width: 8%; } /* 100% THRESHOLD */
+            th:nth-child(11), td:nth-child(11) { width: 8%; } /* 100% INTERVAL */
+            th:nth-child(12), td:nth-child(12) { width: 8%; } /* SOURCE */
+            th:nth-child(13), td:nth-child(13) { width: 8%; } /* REFERENCE */
+            th:nth-child(14), td:nth-child(14) { width: 8%; } /* APPLICABILITY */
         </style>
     </head> 
 <body>
-    <div class="container"></div>
+    <div class="container">
         <button class="btn btn-danger logout-btn" onclick="logout()">Logout</button>
-        <h1>mpd Table<h1>
-        <div>
-            <table class="table" id="mpd">
-            <tr>
-                <th>TASK NUMBER</th>
-                <th>SOURCE TASK REFERENCE</th>
-                <th>ACCESS</th>
-                <th>PREPARATION</th>
-                <th>ZONE</th>
-                <th>DESCRIPTION</th>
-                <th>TASK CODE</th>
-                <th>SAMPLE THRESHOLD</th>
-                <th>SAMPLE INTERVAL</th>
-                <th>100% THRESHOLD</th>
-                <th>100% INTERVAL</th>
-                <th>SOURCE</th>
-                <th>REFERENCE</th>
-                <th>APPLICABILITY</th>
-            </tr>
+        <h1 style="text-align: center;">MPD</h1>
+        <h2 style="text-align: center;">Aircraft Task List</h2>
+
+        <div class="table-container">
+            <table id="mpdTable">
+                <thead>
+                    <tr>
+                        <th>TASK NUMBER</th>
+                        <th>SOURCE TASK REFERENCE</th>
+                        <th>ACCESS</th>
+                        <th>PREPARATION</th>
+                        <th>ZONE</th>
+                        <th>DESCRIPTION</th>
+                        <th>TASK CODE</th>
+                        <th>SAMPLE THRESHOLD</th>
+                        <th>SAMPLE INTERVAL</th>
+                        <th>100% THRESHOLD</th>
+                        <th>100% INTERVAL</th>
+                        <th>SOURCE</th>
+                        <th>REFERENCE</th>
+                        <th>APPLICABILITY</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data will be inserted here -->
+                </tbody>   
             </table>
         </div>
     </div>
 </body>
 
 <script>
-    function showViewAll(){
-        document.getElementById('mpdTable').style.display="block"
-    }
-
-    function addToMPD(aircraft){
-        var tableElement = document.getElementById('mpdTable')
-        var rowElement = tableElement.insertRow(-1)
-        rowElement.setAttribute('taskNumber', task.taskNumber)
-
-        var cell1 = rowElement.insertCell(0);
-        cell1.innerHTML = task.taskNumber
-        var cell2 = rowElement.insertCell(1);
-        cell2.innerHTML = task.sourceTaskReference
-        var cell3 = rowElement.insertCell(2);
-        cell3.innerHTML = task.access
-        var cell4 = rowElement.insertCell(3);
-        cell4.innerHTML = task.preparation
-        var cell5 = rowElement.insertCell(4);
-        cell5.innerHTML = task.zone
-        var cell6 = rowElement.insertCell(5);
-        cell6.innerHTML = task.description
-        var cell7 = rowElement.insertCell(6);
-        cell7.innerHTML = task.taskCode
-        var cell8 = rowElement.insertCell(7);
-        cell8.innerHTML = task.sampleThreshold
-        var cell9 = rowElement.insertCell(8);
-        cell9.innerHTML = task.sampleInterval
-        var cell10 = rowElement.insertCell(9);
-        cell10.innerHTML = task.treshold
-        var cell11 = rowElement.insertCell(10);
-        cell11.innerHTML = task.interval
-        var cell12 = rowElement.insertCell(11);
-        cell12.innerHTML = task.source
-        var cell13 = rowElement.insertCell(12);
-        cell13.innerHTML = task.reference
-        var cell14 = rowElement.insertCell(13);
-        cell14.innerHTML = task.applicability
-    }
-
     function logout() {
-            $.ajax({
-                url: "/logout",
-                method: "GET",
-                success: function() {
-                    // Redirect to the login page after successful logout
-                    window.location.href = "/login";
-                },
-                error: function(xhr, status, error) {
-                    console.log("Logout error: " + status + " " + error);
-                }
-            });
-        }
-
-    function getAllAjax(){
         $.ajax({
-            "url": "/homeData",
-            "method":"GET",
-            "data":"",
-            "dataType": "JSON",
-            "success":function(result){
-                console.log(result);
-                for (task of result){
-                    addToMPD(task);
-                }
+            url: "/logout",
+            method: "GET",
+            success: function() {
+                window.location.href = "/login";
             },
-            "error":function(xhr,status,error){
-                console.log("error: "+status+" msg:"+error);
+            error: function(xhr, status, error) {
+                console.log("Logout error:\nStatus:" + status + "\nError:" + error);
             }
         });
     }
+    
+    async function fetchData() {
+        try {
+            const response = await fetch('/homeData');
+            const data = await response.json();
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = ""; // Clear previous data
+            data.forEach(task => {
+                let row = `<tr>
+                    <td>${task.TASKNUMBER.replace(/\n/g, '<br>')}</td>
+                    <td>${task.SOURCETASK.replace(/\n/g, '<br>')}</td>
+                    <td>${task.ACCESS.replace(/\n/g, '<br>')}</td>
+                    <td>${task.PREPARATION.replace(/\n/g, '<br>')}</td>
+                    <td>${task.ZONE.replace(/\n/g, '<br>')}</td>
+                    <td>${task.DESCRIPTION.replace(/\n/g, '<br>')}</td>
+                    <td>${task.TASKCODE.replace(/\n/g, '<br>')}</td>
+                    <td>${task.SAMPLETHRES.replace(/\n/g, '<br>')}</td>
+                    <td>${task.SAMPLEINT.replace(/\n/g, '<br>')}</td>
+                    <td>${task["100%THRES"]}</td>
+                    <td>${task["100%INT"]}</td>
+                    <td>${task.SOURCE}</td>
+                    <td>${task.REFERENCE}</td>
+                    <td>${task.APPLICABILITY}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }
 
+    // Fetch data when the page loads
+    window.onload = fetchData;
 </script>
 </html>
