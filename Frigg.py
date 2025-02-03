@@ -45,6 +45,7 @@ class InitaliseDBDAO:
                 condition_column.append(condition_list if condition_list else None)
         
         self.mpd['condition'] = condition_column  # Store extracted conditions in a new column
+        return self.mpd
     
     def getMPD(self):
         """Returns the processed DataFrame."""

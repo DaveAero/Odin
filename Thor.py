@@ -16,18 +16,12 @@ class TaskDAO:
     def __init__(self):
         """Initializes the TaskDAO object."""
         self.mpd = None
-    
-    def loadData(self):
         """Loads data from the initialized database and processes it using loki()."""
         db = initDBDAO.InitaliseDBDAO()
-        db.loki()
-        self.mpd = db.getMPD()
-    
-    def typeChecker(self):
-        """Checks and extracts aircraft types (A318, A319, A320, A321) from the 'condition' column."""
-        if self.mpd is None:
-            raise ValueError("Data not loaded. Call loadData() first.")
+        db.getMPD()
+        self.mpd = db.loki()
         
+    def typeChecker(self):        
         typePattern = re.compile(r'(?<=\')\bA318\b|\bA319\b|\bA320\b|\bA321\b(?=\')', re.IGNORECASE)
         
         def Mjolnir(mpdCondition):
@@ -45,11 +39,7 @@ class TaskDAO:
         self.mpd['type'] = self.mpd['condition'].apply(Mjolnir)
         #print(self.mpd['type'])
     
-    def modsChecker(self):
-        """Checks and extracts modification types (PRE, POST) along with their corresponding numbers."""
-        if self.mpd is None:
-            raise ValueError("Data not loaded. Call loadData() first.")
-        
+    def modsChecker(self):   
         modPattern = re.compile(r'(\bPRE\b|\bPOST\b)\', \'(\d+)', re.IGNORECASE)
         
         def Stormbreaker(mpdCondition):
@@ -68,9 +58,9 @@ class TaskDAO:
         self.mpd['mod'] = self.mpd['condition'].apply(Stormbreaker)
         #print(self.mpd['mod'])
     
-    def getAll(self):
+    def getLDND(self):
         """Loads, cleans, and retrieves selected columns from the database every time it's called."""
-        self.loadData()
+
         ldnd = self.mpd[[
             "TASK\nNUMBER", "SOURCE TASK\nREFERENCE", "ACCESS", "PREPARATION", "ZONE", "DESCRIPTION", 
             "TASK CODE", "SAMPLE\nTHRESHOLD", "SAMPLE\nINTERVAL", "100%\nTHRESHOLD", "100%\nINTERVAL", 
@@ -78,6 +68,16 @@ class TaskDAO:
         ]]
         #print(ldnd.head())
         return ldnd
+    
+    def conditions(self):
+        """Loads, cleans, and retrieves selected columns from the database every time it's called."""
+
+        tasks = self.mpd[
+            'condition'
+        ]
+        #print(ldnd.head())
+        return tasks
+        
     
 taskDAO = TaskDAO()
 

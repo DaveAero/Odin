@@ -6,59 +6,52 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AMPER</title>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+        
         <style>
             body {
                 font-family: Arial, sans-serif;
-                font-size: 11px; /* Reduce text size */
+                font-size: 11px;
             }
             .container {
-                max-width: 100%; /* Ensure it fits */
+                max-width: 100%;
                 padding: 20px;
             }
             table {
-                width: fit-content(70%); /* Reduce table width */
+                width: fit-content(70%);
                 margin: auto;
                 border-collapse: collapse;
-                font-size: 11px; /* Smaller text for better fit */
+                font-size: 11px;
             }
             th, td {
-                border: 1px solid black; /* Adds border to all cells */
+                border: 1px solid black;
                 padding: 5px;
                 text-align: center;
                 vertical-align: middle;
-                white-space: nowrap; /* Prevents text wrapping */
+                white-space: nowrap;
                 word-wrap: break-word;
-                white-space: normal; /* Allows text wrapping */
+                white-space: normal;
             }
             th {
                 background-color: #f2f2f2;
             }
             .table-container {
                 max-width: 100%;
-                overflow-x: visible;
+                overflow-x: auto;
                 display: flex;
                 justify-content: center;
             }
             h2 {
                 text-align: center;
             }
-            /* Column width percentage distribution */
-            th:nth-child(1), td:nth-child(1) { width: 8%; }  /* TASK NUMBER */
-            th:nth-child(2), td:nth-child(2) { width: 10%; } /* SOURCE TASK REFERENCE */
-            th:nth-child(3), td:nth-child(3) { width: 8%; }  /* ACCESS */
-            th:nth-child(4), td:nth-child(4) { width: 10%; } /* PREPARATION */
-            th:nth-child(5), td:nth-child(5) { width: 8%; }  /* ZONE */
-            th:nth-child(6), td:nth-child(6) { width: 15%; } /* DESCRIPTION */
-            th:nth-child(7), td:nth-child(7) { width: 8%; }  /* TASK CODE */
-            th:nth-child(8), td:nth-child(8) { width: 8%; }  /* SAMPLE THRESHOLD */
-            th:nth-child(9), td:nth-child(9) { width: 8%; }  /* SAMPLE INTERVAL */
-            th:nth-child(10), td:nth-child(10) { width: 8%; } /* 100% THRESHOLD */
-            th:nth-child(11), td:nth-child(11) { width: 8%; } /* 100% INTERVAL */
-            th:nth-child(12), td:nth-child(12) { width: 8%; } /* SOURCE */
-            th:nth-child(13), td:nth-child(13) { width: 8%; } /* REFERENCE */
-            th:nth-child(14), td:nth-child(14) { width: 8%; } /* APPLICABILITY */
+            .msn-container {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .msn-input {
+                width: 200px;
+                padding: 5px;
+            }
         </style>
     </head> 
 <body>
@@ -67,10 +60,16 @@
         <h1 style="text-align: center;">MPD</h1>
         <h2 style="text-align: center;">Aircraft Task List</h2>
 
+        <!-- Input box for MSN -->
+        <div class="msn-container">
+            <input type="text" id="msnInput" class="msn-input" placeholder="Enter Aircraft MSN">
+            <button class="btn btn-primary" onclick="updateMSN()">Add MSN</button>
+        </div>
+
         <div class="table-container">
             <table id="mpdTable">
                 <thead>
-                    <tr>
+                    <tr id="tableHeaders">
                         <th>TASK NUMBER</th>
                         <th>SOURCE TASK REFERENCE</th>
                         <th>ACCESS</th>
@@ -115,17 +114,18 @@
             const data = await response.json();
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = ""; // Clear previous data
+            
             data.forEach(task => {
                 let row = `<tr>
-                    <td>${task.TASKNUMBER.replace(/\n/g, '<br>')}</td>
-                    <td>${task.SOURCETASK.replace(/\n/g, '<br>')}</td>
-                    <td>${task.ACCESS.replace(/\n/g, '<br>')}</td>
-                    <td>${task.PREPARATION.replace(/\n/g, '<br>')}</td>
-                    <td>${task.ZONE.replace(/\n/g, '<br>')}</td>
-                    <td>${task.DESCRIPTION.replace(/\n/g, '<br>')}</td>
-                    <td>${task.TASKCODE.replace(/\n/g, '<br>')}</td>
-                    <td>${task.SAMPLETHRES.replace(/\n/g, '<br>')}</td>
-                    <td>${task.SAMPLEINT.replace(/\n/g, '<br>')}</td>
+                    <td>${task.TASKNUMBER}</td>
+                    <td>${task.SOURCETASK}</td>
+                    <td>${task.ACCESS}</td>
+                    <td>${task.PREPARATION}</td>
+                    <td>${task.ZONE}</td>
+                    <td>${task.DESCRIPTION}</td>
+                    <td>${task.TASKCODE}</td>
+                    <td>${task.SAMPLETHRES}</td>
+                    <td>${task.SAMPLEINT}</td>
                     <td>${task["100%THRES"]}</td>
                     <td>${task["100%INT"]}</td>
                     <td>${task.SOURCE}</td>
@@ -137,6 +137,45 @@
         } catch (error) {
             console.error("Error fetching data:", error);
         }
+    }
+
+    function updateMSN() {
+        const msnValue = document.getElementById("msnInput").value.trim();
+        if (msnValue === "") {
+            alert("Please enter an MSN number.");
+            return;
+        }
+
+        // Add MSN column header if not already added
+        const tableHeaders = document.getElementById("tableHeaders");
+        if (!document.getElementById("msnHeader")) {
+            let msnHeader = document.createElement("th");
+            msnHeader.id = "msnHeader";
+            msnHeader.textContent = "MSN " + msnValue;
+            tableHeaders.appendChild(msnHeader);
+        }
+
+        // Send request to server to fetch MSN data
+        fetch('/msnData', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ msn: msnValue })
+        })
+        .then(response => response.json())
+        .then(msnData => {
+            const tableRows = document.getElementById("tableBody").rows;
+
+            if (msnData.length !== tableRows.length) {
+                console.warn("Data mismatch: Number of rows does not match number of received data points.");
+            }
+
+            for (let i = 0; i < tableRows.length; i++) {
+                let newCell = document.createElement("td");
+                newCell.textContent = msnData[i] || ""; // Default if no data
+                tableRows[i].appendChild(newCell);
+            }
+        })
+        .catch(error => console.error("Error fetching MSN data:", error));
     }
 
     // Fetch data when the page loads

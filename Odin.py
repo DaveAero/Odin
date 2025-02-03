@@ -106,9 +106,8 @@ def get_aircraft_data():
         return redirect(url_for('login'))
     
     # Fetch all aircraft data from the database
-    taskList = pd.DataFrame(taskDAO.getAll())
-    #print("taskList:{}".format(taskList["TASK\nNUMBER"]))
-
+    taskList = pd.DataFrame(taskDAO.getLDND())
+    #print("taskList:{}".format(taskList["TASK\nNUMBER"])
     # converting a it to a list of dictionaries from a list
     mpdData = []
     for index, task in taskList.iterrows():
@@ -129,19 +128,57 @@ def get_aircraft_data():
             "REFERENCE": task["REFERENCE"],
             "APPLICABILITY": task["APPLICABILITY"]
         }
-
         # Convert NaN to None (so JSON treats it as 'null')
         for key, value in taskDict.items():
             if pd.isna(value):  # Check for NaN values
-                taskDict[key] = None  # Convert to None
-
-
+                taskDict[key] = ''  # Convert to Non
+        
+        for key, value in taskDict.items():
+            if isinstance(value, str):  # Check for NaN values
+                taskDict[key] = value.replace("\n", "<br>")
+        
         mpdData.append(taskDict)
 
     # Return the data in JSON format
     #print(mpdData)
     #print("Jsonify:{}".format(jsonify(mpdData)))
+
+
     return jsonify(mpdData)
+
+
+msn = None
+
+@app.route('/msnData', methods=['POST'])
+def get_msn_data():
+    """Handles the request for MSN data and returns applicable values."""
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.get_json()
+    msn = data.get("msn", "").strip()
+    if not msn:
+        return jsonify({"error": "Invalid MSN"}), 400
+
+    # Fetch conditions from database
+    mpdConditions = pd.DataFrame(taskDAO.conditions())
+
+    if "condition" not in mpdConditions.columns:
+        return jsonify({"error": "Invalid data format"}), 500
+
+    # Create a new column dynamically using the MSN value
+    column_name = f"MSN {msn}"
+    mpdConditions[column_name] = ""
+
+    # Apply the condition (from line 168-170)
+    for index, row in mpdConditions.iterrows():
+        conditionlist = row["condition"]
+        condition = conditionlist[0]
+        if condition[0] == "ALL":
+            mpdConditions.at[index, column_name] = "Applicable"
+
+    # Return only the new column as JSON list
+    return jsonify(mpdConditions[column_name].tolist())
 
 #########################################################################################
 #########################################################################################
