@@ -102,67 +102,24 @@ def homePage():
 #########################################################################################
 @app.route('/homeData', methods=['GET'])
 def get_aircraft_data():
-
-    #  Provide JSON data of all aircraft.
-    # This endpoint is used by the aircraft management page to load data.
-
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    # Fetch all aircraft data from the database
-    taskList = pd.DataFrame(taskDAO.getLDND())
-    #print("taskList:{}".format(taskList["TASK\nNUMBER"])
-    # converting a it to a list of dictionaries from a list
-    mpdData = []
-    for index, task in taskList.iterrows():
-        #print("task:{}. index:{}".format(task["TASK\nNUMBER"], index))
-        taskDict = {
-            "TASKNUMBER": task["TASK\nNUMBER"],
-            "SOURCETASK": task["SOURCE TASK\nREFERENCE"],
-            "ACCESS": task["ACCESS"],
-            "PREPARATION": task["PREPARATION"],
-            "ZONE": task["ZONE"],
-            "DESCRIPTION": task["DESCRIPTION"],
-            "TASKCODE": task["TASK CODE"],
-            "SAMPLETHRES": task["SAMPLE\nTHRESHOLD"],
-            "SAMPLEINT": task["SAMPLE\nINTERVAL"],
-            "100%THRES": task["100%\nTHRESHOLD"],
-            "100%INT": task["100%\nINTERVAL"],
-            "SOURCE": task["SOURCE"],
-            "REFERENCE": task["REFERENCE"],
-            "APPLICABILITY": task["APPLICABILITY"]
-        }
-        # Convert NaN to None (so JSON treats it as 'null')
-        for key, value in taskDict.items():
-            if pd.isna(value):  # Check for NaN values
-                taskDict[key] = ''  # Convert to Non
-        
-        for key, value in taskDict.items():
-            if isinstance(value, str):  # Check for NaN values
-                taskDict[key] = value.replace("\n", "<br>")
-        
-        mpdData.append(taskDict)
-
-    # Return the data in JSON format
-    #print(mpdData)
-    #print("Jsonify:{}".format(jsonify(mpdData)))
-
-
-    return jsonify(mpdData)
+    taskList = taskDAO.getLDND()
+    
+    # Convert DataFrame directly to JSON without iteration
+    return taskList.fillna("").to_json(orient="records")
 
 msn = None
 
 #########################################################################################
 @app.route('/msnData', methods=['POST'])
 def get_msn_data():
-    """Handles the request for MSN data and returns applicable values."""
     if 'username' not in session:
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.get_json()
     msn = data.get("msn", "").strip()
-    if not msn:
-        return jsonify({"error": "Invalid MSN"}), 400
 
     # Fetch conditions from database
     applicabilities = list(taskDAO.addMSN(msn))

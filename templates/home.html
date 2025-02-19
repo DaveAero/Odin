@@ -93,7 +93,7 @@
         <!-- Input box for MSN -->
         <div class="msn-container">
             <input type="text" id="msnInput" class="msn-input" placeholder="Enter Aircraft MSN">
-            <button class="btn btn-primary" onclick="updateMSN()">Add MSN</button>
+            <button class="btn btn-primary" onclick="addMSN()">Add MSN</button>
         </div>
         <div class="table-container">
             <table id="mpdTable">
@@ -147,86 +147,73 @@
             const response = await fetch('/homeData');
             const data = await response.json();
             const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = ""; // Clear previous data
-            
-            data.forEach(task => {
-                let row = `<tr>
-                    <td>${task.TASKNUMBER}</td>
-                    <td>${task.SOURCETASK}</td>
-                    <td>${task.ACCESS}</td>
-                    <td>${task.PREPARATION}</td>
-                    <td>${task.ZONE}</td>
-                    <td>${task.DESCRIPTION}</td>
-                    <td>${task.TASKCODE}</td>
-                    <td>${task.SAMPLETHRES}</td>
-                    <td>${task.SAMPLEINT}</td>
-                    <td>${task["100%THRES"]}</td>
-                    <td>${task["100%INT"]}</td>
-                    <td>${task.SOURCE}</td>
-                    <td>${task.REFERENCE}</td>
-                    <td>${task.APPLICABILITY}</td>
-                </tr>`;
-                tableBody.innerHTML += row;
-            });
+
+            if (!data.length) {
+                tableBody.innerHTML = "<tr><td colspan='14'>No data available</td></tr>";
+                return;
+            }
+
+            let rows = data.map(task => `
+                <tr>
+                    <td>${task["TASK\nNUMBER"] || ''}</td>
+                    <td>${task["SOURCE TASK\nREFERENCE"] || ''}</td>
+                    <td>${task["ACCESS"] || ''}</td>
+                    <td>${task["PREPARATION"] || ''}</td>
+                    <td>${task["ZONE"] || ''}</td>
+                    <td>${task["DESCRIPTION"] || ''}</td>
+                    <td>${task["TASK CODE"] || ''}</td>
+                    <td>${task["SAMPLE\nTHRESHOLD"] || ''}</td>
+                    <td>${task["SAMPLE\nINTERVAL"] || ''}</td>
+                    <td>${task["100%\nTHRESHOLD"] || ''}</td>
+                    <td>${task["100%\nINTERVAL"] || ''}</td>
+                    <td>${task["SOURCE"] || ''}</td>
+                    <td>${task["REFERENCE"] || ''}</td>
+                    <td>${task["APPLICABILITY"] || ''}</td>
+                </tr>
+            `).join("");  // Batch HTML insertions
+
+            tableBody.innerHTML = rows;
         } catch (error) {
             console.error("Error fetching data:", error);
         }
     }
 
-    function updateMSN() {
+    async function addMSN() {
         const msnValue = document.getElementById("msnInput").value.trim();
-        if (msnValue === "") {
+        if (!msnValue) {
             alert("Please enter an MSN number.");
             return;
         }
 
-        console.log("MSN Entered:", msnValue); // Debugging log
+        try {
+            const response = await fetch('/msnData', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ msn: msnValue })
+            });
 
-        // Add MSN column header if not already added
-        const tableHeaders = document.getElementById("tableHeaders");
-        if (!document.getElementById("msnHeader")) {
-            let msnHeader = document.createElement("th");
-            msnHeader.id = "msnHeader";
-            msnHeader.textContent = "MSN " + msnValue;
-            msnHeader.style.width = "7.56%";
-            tableHeaders.appendChild(msnHeader);
-        }
+            if (!response.ok) throw new Error("Failed to fetch MSN data");
 
-        // Send request to server to fetch MSN data
-        fetch('/msnData', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ msn: msnValue })
-        })
-        .then(response => response.json())
-        .then(msnData => {
-            console.log("MSN Data Received:", msnData); // Debugging log
+            const msnData = await response.json();
+            const tableHeaders = document.getElementById("tableHeaders");
 
-            const tableRows = document.getElementById("tableBody").rows;
-
-            if (msnData.length !== tableRows.length) {
-                console.warn("Data mismatch: Number of rows does not match number of received data points.");
+            // Only append header if it doesn’t exist
+            if (!document.getElementById("msnHeader")) {
+                tableHeaders.insertAdjacentHTML('beforeend', `<th id="msnHeader">MSN ${msnValue}</th>`);
             }
 
-            for (let i = 0; i < tableRows.length; i++) {
-                let newCell = document.createElement("td");
-                newCell.textContent = msnData[i] || ""; // Default if no data
-                tableRows[i].appendChild(newCell);
-            }
+            // Update table data
+            const tableRows = document.querySelectorAll("#tableBody tr");
+            tableRows.forEach((row, index) => {
+                let newCell = row.insertCell(-1);
+                newCell.textContent = msnData[index] || "";
+            });
 
-            // Hide the input box and button after adding the MSN
             document.querySelector(".msn-container").style.display = "none";
-
-            // Show the Download button
-            const downloadBtn = document.getElementById("downloadBtn");
-            if (downloadBtn) {
-                console.log("Download button found. Making it visible.");
-                downloadBtn.style.display = "inline-block"; // Use "inline-block" instead of "block"
-                downloadBtn.style.position = "relative"; // Ensure it's positioned correctly
-                downloadBtn.style.zIndex = "9999"; // Ensure it's above other elements
-            }
-        })
-        .catch(error => console.error("Error fetching MSN data:", error));
+            document.getElementById("downloadBtn").style.display = "inline-block";
+        } catch (error) {
+            console.error("Error fetching MSN data:", error);
+        }
     }
 
 

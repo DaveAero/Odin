@@ -11,11 +11,21 @@ import re
 
 # The Main AircraftDAO class
 class InitaliseDBDAO:
+    cachedMPD = None  # Static variable to cache data
+
     def __init__(self, file_path='data/MPDA320_R49_I00.xls'):
-        """Initializes the database with the given file path."""
+        """Initializes the database with the given file path and caches it to avoid reloading."""
         self.file_path = file_path
-        self.mpd = None
+        if InitaliseDBDAO.cachedMPD is None:
+            self._load_data()
+        else:
+            self.mpd = InitaliseDBDAO.cachedMPD
+
+    def _load_data(self):
+        """Loads the Excel file into a Pandas DataFrame and cleans column names."""
         self.mpd = pd.read_excel(self.file_path, sheet_name="MPD", skiprows=2)
+
+        InitaliseDBDAO.cachedMPD = self.mpd  # Cache the cleaned DataFrame
     
     def loki(self):
         """Processes the 'APPLICABILITY' column to extract conditions."""

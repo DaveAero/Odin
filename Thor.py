@@ -73,7 +73,7 @@ class TaskDAO:
     
     def addMSN(self, msn):
         # Create a new column dynamically using the MSN value
-        global column_name
+        self.msn = msn
         column_name = f"MSN {msn}"
         self.mpd[column_name] = ""
 
@@ -85,19 +85,17 @@ class TaskDAO:
                 self.mpd.at[index, column_name] = "Applicable"
 
         return self.mpd[column_name].tolist()
-    
-    def getAll(self):
-        return self.mpd
- 
-    
 
     def getCopy(self):
+        msn = self.msn
+        column_name = f"MSN {msn}"
+        
         ldnd = self.mpd[[
             "TASK\nNUMBER", "SOURCE TASK\nREFERENCE", "ACCESS", "PREPARATION", "ZONE", "DESCRIPTION", 
             "TASK CODE", "SAMPLE\nTHRESHOLD", "SAMPLE\nINTERVAL", "100%\nTHRESHOLD", "100%\nINTERVAL", 
             "SOURCE", "REFERENCE", "APPLICABILITY", column_name
         ]]
-    
+
         # Replace NaN and Infinity values before writing to Excel
         ldnd.replace([np.nan, float('nan'), float('inf'), float('-inf')], "", inplace=True)
     
