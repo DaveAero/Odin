@@ -5,7 +5,7 @@
 
 #########################################################################################
 # Import required functions
-from flask import Flask, request, redirect, url_for, render_template, session, flash, jsonify
+from flask import Flask, request, redirect, url_for, render_template, session, flash, jsonify, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from Thor import taskDAO
 import pandas as pd
@@ -33,6 +33,8 @@ users = {
     "david": generate_password_hash("myMumHasLitACandle") # User 3
 }
 
+#########################################################################################
+#########################################################################################
 #########################################################################################
 ### At the root page of the server
 @app.route('/')
@@ -84,6 +86,7 @@ def logout():
     # Redirect to the login page
     return redirect(url_for('login'))
 
+#########################################################################################
 @app.route('/home')
 def homePage():
 
@@ -96,6 +99,7 @@ def homePage():
     # Render the aircraft management page
     return render_template('home.html')
 
+#########################################################################################
 @app.route('/homeData', methods=['GET'])
 def get_aircraft_data():
 
@@ -146,9 +150,9 @@ def get_aircraft_data():
 
     return jsonify(mpdData)
 
-
 msn = None
 
+#########################################################################################
 @app.route('/msnData', methods=['POST'])
 def get_msn_data():
     """Handles the request for MSN data and returns applicable values."""
@@ -161,147 +165,20 @@ def get_msn_data():
         return jsonify({"error": "Invalid MSN"}), 400
 
     # Fetch conditions from database
-    mpdConditions = pd.DataFrame(taskDAO.conditions())
-
-    if "condition" not in mpdConditions.columns:
-        return jsonify({"error": "Invalid data format"}), 500
-
-    # Create a new column dynamically using the MSN value
-    column_name = f"MSN {msn}"
-    mpdConditions[column_name] = ""
-
-    # Apply the condition (from line 168-170)
-    for index, row in mpdConditions.iterrows():
-        conditionlist = row["condition"]
-        condition = conditionlist[0]
-        if condition[0] == "ALL":
-            mpdConditions.at[index, column_name] = "Applicable"
+    applicabilities = list(taskDAO.addMSN(msn))
 
     # Return only the new column as JSON list
-    return jsonify(mpdConditions[column_name].tolist())
+    return jsonify(applicabilities)
 
 #########################################################################################
-#########################################################################################
-#########################################################################################
-
-# Retrieve all aircraft
-@app.route('/aircraft', methods=['POST'])
-def createAircraft():
-
-    # Handle the creation of a new aircraft.
-    # Receive aircraft data from the request and insert it into the database.
-
+@app.route('/download')
+def download_mpd():
     if 'username' not in session:
         return redirect(url_for('login'))
-    
-    # Putting the aircraft data into a dictionary
-    aircraft = {
-        "model_name": request.json.get("model_name"),
-        "manufacturer": request.json.get("manufacturer"),
-        "aircraft_serial_number": request.json.get("aircraft_serial_number"),
-        "configuration": request.json.get("configuration"),
-        "last_flight": request.json.get("last_flight"),
-        "certificate_of_airworthiness": request.json.get("certificate_of_airworthiness"),
-        "country_of_origin": request.json.get("country_of_origin"),
-        "country_of_registration": request.json.get("country_of_registration"),
-        "engine_type": request.json.get("engine_type"),
-    }
-    # Insert the new aircraft into the database using DAO. The my DAO server will return the aircraft id
-    aircraftID = taskDAO.create(tuple(aircraft.values()))
-    # Getting the aircraft id from the update mysql 
-    aircraft["aircraft_id"] = aircraftID
-    # Return the new aircraft in JSON format
-    return jsonify(aircraft), 201
 
+    output = taskDAO.getCopy()  # Get the in-memory file
+    return send_file(output, as_attachment=True, download_name="MPD_File.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-#########################################################################################
-# Retrieve aircraft by id
-@app.route('/aircraft/<int:id>')
-def findAircraftById(id):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    
-    aircraft = taskDAO.findByID(id)
-    if aircraft is None:
-        return jsonify({}), 204
-    return jsonify(aircraft)  
-
-#########################################################################################
-# Update existing aircraft
-# curl -X "PUT" -d "{\"Title\":\"New Title\", \"Price\":999}" -H "content-type:application/json" http://127.0.0.1:5000/books/1
-@app.route('/aircraft/<int:id>', methods=['PUT'])
-def updateAircraft(id):
-
-    # Handle the update of an existing aircraft.
-    # Receive updated aircraft data and update it in the database.
-
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    
-    # Getting current aircraft data from the mysql server
-    aircraft = taskDAO.findByID(id)
-    if aircraft is None:
-        return jsonify({}), 404
-    
-    if not request.json:
-        abort(400)
-    
-    # Converting the tuple returned by findByID to a dictionary
-    foundAircraft = {
-        "model_name": aircraft[1],
-        "manufacturer": aircraft[2],
-        "aircraft_serial_number": aircraft[3],
-        "configuration": aircraft[4],
-        "last_flight": aircraft[5],
-        "certificate_of_airworthiness": aircraft[6],
-        "country_of_origin": aircraft[7],
-        "country_of_registration": aircraft[8],
-        "engine_type": aircraft[9],
-        "aircraft_id": aircraft[0]
-    }
-
-    # Getting the updated info from the html request
-    reqJson = request.json
-
-    # Update the dictionary with the new values from the request
-    foundAircraft['model_name'] = reqJson.get('model_name', foundAircraft['model_name'])
-    foundAircraft['manufacturer'] = reqJson.get('manufacturer', foundAircraft['manufacturer'])
-    foundAircraft['aircraft_serial_number'] = reqJson.get('aircraft_serial_number', foundAircraft['aircraft_serial_number'])
-    foundAircraft['configuration'] = reqJson.get('configuration', foundAircraft['configuration'])
-    foundAircraft['last_flight'] = reqJson.get('last_flight', foundAircraft['last_flight'])
-    foundAircraft['certificate_of_airworthiness'] = reqJson.get('certificate_of_airworthiness', foundAircraft['certificate_of_airworthiness'])
-    foundAircraft['country_of_origin'] = reqJson.get('country_of_origin', foundAircraft['country_of_origin'])
-    foundAircraft['country_of_registration'] = reqJson.get('country_of_registration', foundAircraft['country_of_registration'])
-    foundAircraft['engine_type'] = reqJson.get('engine_type', foundAircraft['engine_type'])
-
-    # Converting to a tuple for the mysql server
-    updated_aircraft = tuple(foundAircraft.values())
-
-    # Pass the tuple to the update method
-    #print(updated_aircraft)
-    taskDAO.update(updated_aircraft)
-    
-    return jsonify(foundAircraft)
-
-#########################################################################################
-# Delete aircraft
-@app.route('/aircraft/<int:id>', methods=['DELETE'])
-def deleteAircraft(id):
-
-    # Handle the deletion of an aircraft.
-    # Remove the specified aircraft from the database.
-
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    
-    aircraft = taskDAO.findByID(id)
-    if aircraft is None:
-        return jsonify({}), 404
-    
-    # Delete the aircraft from the database using DAO
-    taskDAO.delete(id)
-    # Return a success message
-    return jsonify({"status": "success"}), 200
 
 #########################################################################################
 #########################################################################################

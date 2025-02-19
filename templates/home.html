@@ -12,25 +12,44 @@
             body {
                 font-family: Arial, sans-serif;
                 font-size: 11px;
+                display: flex;
+                flex-direction: row;
             }
-            .container {
-                max-width: 100%;
-                padding: 20px;
+            .main-content {
+                width: 75%;
+                padding: 5px;
+            }
+            .right-container {
+                position: fixed; /* Keeps the container fixed on the right side */
+                top: 0;
+                right: 0;
+                width: 25%;
+                padding: 5px;
+                background-color: #f9f9f9; /* Light background for distinction */
+                border-left: 1px solid #ddd;
+                height: 100vh; /* Ensures it spans the full viewport height */
+                box-sizing: border-box; /* Includes padding in the height calculation */
+                display: flex; /* Enable Flexbox */
+                flex-direction: column; /* Stack content vertically */
+                justify-content: center; /* Center content vertically */
+                align-items: center; /* Center content horizontally (optional) */
+                overflow-y: auto; /* Adds a scrollbar if content exceeds the container height */
             }
             table {
-                width: fit-content(70%);
+                min-width: 100%;
+                max-width: 100%;
                 margin: auto;
                 border-collapse: collapse;
                 font-size: 11px;
             }
             th, td {
                 border: 1px solid black;
-                padding: 5px;
+                padding: 4px;
                 text-align: center;
                 vertical-align: middle;
-                white-space: nowrap;
-                word-wrap: break-word;
                 white-space: normal;
+                word-wrap: break-word;
+                word-break: break-word;
             }
             th {
                 background-color: #f2f2f2;
@@ -39,7 +58,7 @@
                 max-width: 100%;
                 overflow-x: auto;
                 display: flex;
-                justify-content: center;
+                justify-content: start;
             }
             h2 {
                 text-align: center;
@@ -52,38 +71,48 @@
                 width: 200px;
                 padding: 5px;
             }
+            .download-container {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 9999; /* Ensures it's on top */
+                background-color: white; /* Optional: Add a background for visibility */
+                padding: 5px; /* Optional: Space around the button */
+                border-radius: 5px; /* Optional: Rounded corners */
+            }
         </style>
     </head> 
 <body>
-    <div class="container">
+    <div class="main-content">
         <button class="btn btn-danger logout-btn" onclick="logout()">Logout</button>
+        <div class="download-container">
+            <button id="downloadBtn" class="btn btn-success" onclick="downloadMPD()" style="display: none;">Download</button>
+        </div>
         <h1 style="text-align: center;">MPD</h1>
         <h2 style="text-align: center;">Aircraft Task List</h2>
-
         <!-- Input box for MSN -->
         <div class="msn-container">
             <input type="text" id="msnInput" class="msn-input" placeholder="Enter Aircraft MSN">
             <button class="btn btn-primary" onclick="updateMSN()">Add MSN</button>
         </div>
-
         <div class="table-container">
             <table id="mpdTable">
                 <thead>
                     <tr id="tableHeaders">
-                        <th>TASK NUMBER</th>
-                        <th>SOURCE TASK REFERENCE</th>
-                        <th>ACCESS</th>
-                        <th>PREPARATION</th>
-                        <th>ZONE</th>
-                        <th>DESCRIPTION</th>
-                        <th>TASK CODE</th>
-                        <th>SAMPLE THRESHOLD</th>
-                        <th>SAMPLE INTERVAL</th>
-                        <th>100% THRESHOLD</th>
-                        <th>100% INTERVAL</th>
-                        <th>SOURCE</th>
-                        <th>REFERENCE</th>
-                        <th>APPLICABILITY</th>
+                        <th style="width: 7.56%;">TASK NUMBER</th>
+                        <th style="width: 7.52%;">SOURCE TASK REFERENCE</th>
+                        <th style="width: 7.29%;">ACCESS</th>
+                        <th style="width: 9.58%;">PREPARATION</th>
+                        <th style="width: 2.52%;">ZONE</th>
+                        <th style="width: 19.57%;">DESCRIPTION</th>
+                        <th style="width: 2.57%;">TASK CODE</th>
+                        <th style="width: 5.18%;">SAMPLE THRESHOLD</th>
+                        <th style="width: 4.22%;">SAMPLE INTERVAL</th>
+                        <th style="width: 5.18%;">100% THRESHOLD</th>
+                        <th style="width: 4.22%;">100% INTERVAL</th>
+                        <th style="width: 4.24%;">SOURCE</th>
+                        <th style="width: 5.64%;">REFERENCE</th>
+                        <th style="width: 7.15%;">APPLICABILITY</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -91,6 +120,11 @@
                 </tbody>   
             </table>
         </div>
+    </div>
+    <div class="right-container">
+        <h3>Additional Info</h3>
+        <p>This is the right-hand container. You can use this area for displaying side information, widgets, or navigation links.</p>
+        <!-- Add any additional content here -->
     </div>
 </body>
 
@@ -146,12 +180,15 @@
             return;
         }
 
+        console.log("MSN Entered:", msnValue); // Debugging log
+
         // Add MSN column header if not already added
         const tableHeaders = document.getElementById("tableHeaders");
         if (!document.getElementById("msnHeader")) {
             let msnHeader = document.createElement("th");
             msnHeader.id = "msnHeader";
             msnHeader.textContent = "MSN " + msnValue;
+            msnHeader.style.width = "7.56%";
             tableHeaders.appendChild(msnHeader);
         }
 
@@ -163,6 +200,8 @@
         })
         .then(response => response.json())
         .then(msnData => {
+            console.log("MSN Data Received:", msnData); // Debugging log
+
             const tableRows = document.getElementById("tableBody").rows;
 
             if (msnData.length !== tableRows.length) {
@@ -174,8 +213,26 @@
                 newCell.textContent = msnData[i] || ""; // Default if no data
                 tableRows[i].appendChild(newCell);
             }
+
+            // Hide the input box and button after adding the MSN
+            document.querySelector(".msn-container").style.display = "none";
+
+            // Show the Download button
+            const downloadBtn = document.getElementById("downloadBtn");
+            if (downloadBtn) {
+                console.log("Download button found. Making it visible.");
+                downloadBtn.style.display = "inline-block"; // Use "inline-block" instead of "block"
+                downloadBtn.style.position = "relative"; // Ensure it's positioned correctly
+                downloadBtn.style.zIndex = "9999"; // Ensure it's above other elements
+            }
         })
         .catch(error => console.error("Error fetching MSN data:", error));
+    }
+
+
+
+    function downloadMPD() {
+        window.location.href = "/download";
     }
 
     // Fetch data when the page loads
