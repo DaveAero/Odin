@@ -5,6 +5,7 @@
 
 #########################################################################################
 # Import required functions
+from collections import Counter
 import Frigg as initDBDAO
 import regex as re
 import pandas as pd
@@ -19,11 +20,13 @@ class TaskDAO:
     def __init__(self):
         """Initializes the TaskDAO object."""
         self.mpd = None
+        self.config = {}
         """Loads data from the initialized database and processes it using loki()."""
         db = initDBDAO.InitaliseDBDAO()
         db.getMPD()
         self.mpd = db.loki()
-        
+    
+    #########################################################################################
     def typeChecker(self):        
         typePattern = re.compile(r'(?<=\')\bA318\b|\bA319\b|\bA320\b|\bA321\b(?=\')', re.IGNORECASE)
         
@@ -42,9 +45,10 @@ class TaskDAO:
         self.mpd['type'] = self.mpd['condition'].apply(Mjolnir)
         #print(self.mpd['type'])
     
+    #########################################################################################
     def modsChecker(self):   
         modPattern = re.compile(r'(\bPRE\b|\bPOST\b)\', \'(\d+)', re.IGNORECASE)
-        
+
         def Stormbreaker(mpdCondition):
             results = []
             for i in mpdCondition:
@@ -52,15 +56,30 @@ class TaskDAO:
                 modmatches = modPattern.findall(str(i))
                 if modmatches:
                     for prefix, number in modmatches:
-                        condition[number] = prefix
+                        condition[number] = True if prefix.upper() == "POST" else False
+                if condition:  # Only append if condition is not empty
+                    results.append(condition)
                 else:
-                    condition['0'] = 0
-                results.append(condition)
+                    results.append({})  # Append an empty dictionary instead of assigning '0'
             return results
 
         self.mpd['mod'] = self.mpd['condition'].apply(Stormbreaker)
         #print(self.mpd['mod'])
+
+    def getModKeys(self):
+        self.modsChecker()  # Ensure mod keys are generated
+        modCounter = Counter()
+
+        for entry in self.mpd['mod']:  # Fix: Access the 'mod' column properly
+            for mod_dict in entry:
+                modCounter.update(mod_dict.keys())
+
+        # Sort by frequency (highest to lowest)
+        sorted_mods = sorted(modCounter.items(), key=lambda x: x[1], reverse=True)
+
+        return sorted_mods  # Returns a list of tuples [(mod_number, count), ...]
     
+    #########################################################################################
     def getLDND(self):
 
         ldnd = self.mpd[[
@@ -68,9 +87,13 @@ class TaskDAO:
             "TASK CODE", "SAMPLE\nTHRESHOLD", "SAMPLE\nINTERVAL", "100%\nTHRESHOLD", "100%\nINTERVAL", 
             "SOURCE", "REFERENCE", "APPLICABILITY"
         ]]
+
+        # Replace newlines with <br> for HTML rendering
+        ldnd = ldnd.map(lambda x: str(x).replace("\n", "<br>") if isinstance(x, str) else x)
         #print(ldnd.head())
         return ldnd
     
+    #########################################################################################
     def addMSN(self, msn):
         # Create a new column dynamically using the MSN value
         self.msn = msn
@@ -86,10 +109,11 @@ class TaskDAO:
 
         return self.mpd[column_name].tolist()
 
+    #########################################################################################
     def getCopy(self):
         msn = self.msn
         column_name = f"MSN {msn}"
-        
+
         ldnd = self.mpd[[
             "TASK\nNUMBER", "SOURCE TASK\nREFERENCE", "ACCESS", "PREPARATION", "ZONE", "DESCRIPTION", 
             "TASK CODE", "SAMPLE\nTHRESHOLD", "SAMPLE\nINTERVAL", "100%\nTHRESHOLD", "100%\nINTERVAL", 
@@ -145,6 +169,21 @@ class TaskDAO:
     
         output.seek(0)
         return output
+    
+    #########################################################################################
+    def getAll(self):
+        return self.mpd
+    
+    #########################################################################################
+    def update_mod_selection(self, mod_number, is_post):
+        """Stores the pre/post selection for the given mod number."""
+        self.config[mod_number] = is_post  # True for Post, False for Pre
+        print(f"Updated config: {self.config}")  # Debugging statement
+
+    #########################################################################################
+    def get_config(self):
+        """Returns the stored configuration."""
+        return self.config
     
 taskDAO = TaskDAO()
 

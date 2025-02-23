@@ -10,10 +10,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from Thor import taskDAO
 import pandas as pd
 
-# Initalising Database
-
-
-
 #########################################################################################
 # Initialize the Flask application
 app = Flask(__name__)
@@ -124,8 +120,11 @@ def get_msn_data():
     # Fetch conditions from database
     applicabilities = list(taskDAO.addMSN(msn))
 
-    # Return only the new column as JSON list
-    return jsonify(applicabilities)
+    # Fetch unique mod keys (corrected function call)
+    mod_keys = [mod for mod, _ in taskDAO.getModKeys()]  
+
+    # Return the response with both MSN data and unique mod keys
+    return jsonify({"applicabilities": applicabilities, "mod_keys": mod_keys})
 
 #########################################################################################
 @app.route('/download')
@@ -135,6 +134,39 @@ def download_mpd():
 
     output = taskDAO.getCopy()  # Get the in-memory file
     return send_file(output, as_attachment=True, download_name="MPD_File.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+#########################################################################################
+@app.route('/updateModSelection', methods=['POST'])
+def update_mod_selection():
+    """Receives mod selection data and updates the database."""
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.get_json()
+    modNumber, condition = next(iter(data.items()))  # Extract the mod number and boolean value
+    modNumber = str(modNumber)  # Convert to string to match dictionary keys
+
+    # Update the database via Thor.py
+    taskDAO.update_mod_selection(modNumber, condition)
+
+    # Iterate over the self.mpd['mod'] column to check for matches
+    for index, row in taskDAO.mpd.iterrows():
+        mod_entries = row['mod']  # This is a list of dictionaries
+        applicability_text = str(row["APPLICABILITY"])  # Convert to string for modifications
+
+        for mod_dict in mod_entries:
+            if modNumber in mod_dict:
+                # Convert mod number back to Pre/Post format
+                mod_text = ("Post " if condition else "Pre ") + modNumber
+                
+                if mod_dict[modNumber] == condition:
+                    # Highlight in green if values match
+                    print(modNumber, condition, row["APPLICABILITY"])
+                #else:
+                    # Strike through if values do not match
+                    #print(modNumber, condition, row["APPLICABILITY"])
+                
+    return jsonify({"success": True})
 
 
 #########################################################################################

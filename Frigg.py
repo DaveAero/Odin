@@ -27,6 +27,7 @@ class InitaliseDBDAO:
 
         InitaliseDBDAO.cachedMPD = self.mpd  # Cache the cleaned DataFrame
     
+    #########################################################################################
     def loki(self):
         """Processes the 'APPLICABILITY' column to extract conditions."""
         if self.mpd is None:
@@ -57,6 +58,7 @@ class InitaliseDBDAO:
         self.mpd['condition'] = condition_column  # Store extracted conditions in a new column
         return self.mpd
     
+    #########################################################################################
     def getMPD(self):
         """Returns the processed DataFrame."""
         if self.mpd is None:

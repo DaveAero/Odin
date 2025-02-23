@@ -59,6 +59,7 @@
                 overflow-x: auto;
                 display: flex;
                 justify-content: start;
+                position: relative;
             }
             h2 {
                 text-align: center;
@@ -72,13 +73,10 @@
                 padding: 5px;
             }
             .download-container {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                z-index: 9999; /* Ensures it's on top */
-                background-color: white; /* Optional: Add a background for visibility */
-                padding: 5px; /* Optional: Space around the button */
-                border-radius: 5px; /* Optional: Rounded corners */
+                position: absolute; /* Keeps it positioned relative to .main-content */
+                top: 0; /* Sticks to the top */
+                right: 25%; /* Moves it 25% from the right */
+                padding: 5px;
             }
         </style>
     </head> 
@@ -96,6 +94,7 @@
             <button class="btn btn-primary" onclick="addMSN()">Add MSN</button>
         </div>
         <div class="table-container">
+            
             <table id="mpdTable">
                 <thead>
                     <tr id="tableHeaders">
@@ -121,10 +120,9 @@
             </table>
         </div>
     </div>
-    <div class="right-container">
-        <h3>Additional Info</h3>
-        <p>This is the right-hand container. You can use this area for displaying side information, widgets, or navigation links.</p>
-        <!-- Add any additional content here -->
+    <div class="right-container" style="padding-top: 50px;">
+        <h3>Modifications</h3>
+        <div id="modList" style="width: 100%; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 90vh;"></div>
     </div>
 </body>
 
@@ -194,29 +192,86 @@
 
             if (!response.ok) throw new Error("Failed to fetch MSN data");
 
-            const msnData = await response.json();
-            const tableHeaders = document.getElementById("tableHeaders");
+            const data = await response.json();
+            const { applicabilities, mod_keys } = data;
 
-            // Only append header if it doesn’t exist
+            // Update table with MSN values
+            const tableHeaders = document.getElementById("tableHeaders");
             if (!document.getElementById("msnHeader")) {
                 tableHeaders.insertAdjacentHTML('beforeend', `<th id="msnHeader">MSN ${msnValue}</th>`);
             }
 
-            // Update table data
             const tableRows = document.querySelectorAll("#tableBody tr");
             tableRows.forEach((row, index) => {
                 let newCell = row.insertCell(-1);
-                newCell.textContent = msnData[index] || "";
+                newCell.textContent = applicabilities[index] || "";
             });
 
             document.querySelector(".msn-container").style.display = "none";
             document.getElementById("downloadBtn").style.display = "inline-block";
+
+            // Update the right container with mod keys
+            updateModKeyList(mod_keys);
         } catch (error) {
             console.error("Error fetching MSN data:", error);
         }
     }
 
+    function updateModKeyList(modKeys) {
+        const rightContainer = document.getElementById("modList");
+        rightContainer.innerHTML = ""; // Clear previous content
 
+        if (modKeys.length === 0) {
+            rightContainer.innerHTML = "<p>No mod keys found.</p>";
+            return;
+        }
+
+        modKeys.forEach(key => {
+            const modBox = document.createElement("div");
+            modBox.style.border = "1px solid black";
+            modBox.style.padding = "10px";
+            modBox.style.borderRadius = "5px";
+            modBox.style.backgroundColor = "#fff";
+            modBox.style.display = "flex";
+            modBox.style.flexDirection = "column";
+            modBox.style.alignItems = "center";
+            modBox.style.width = "80%";
+            modBox.style.margin = "auto";
+
+            const modLabel = document.createElement("h5");
+            modLabel.textContent = `Mod ${key}`;
+            modBox.appendChild(modLabel);
+
+            const checkboxContainer = document.createElement("div");
+            checkboxContainer.style.display = "flex";
+            checkboxContainer.style.gap = "10px";
+            checkboxContainer.style.alignItems = "center";
+
+            const preCheckbox = document.createElement("input");
+            preCheckbox.type = "checkbox";
+            preCheckbox.id = `pre_${key}`;
+            preCheckbox.onclick = function() { 
+                if (preCheckbox.checked) postCheckbox.checked = false; 
+                sendCheckboxData(key, false);
+            };
+
+            const postCheckbox = document.createElement("input");
+            postCheckbox.type = "checkbox";
+            postCheckbox.id = `post_${key}`;
+            postCheckbox.onclick = function() { 
+                if (postCheckbox.checked) preCheckbox.checked = false; 
+                sendCheckboxData(key, true);
+            };
+
+            checkboxContainer.appendChild(document.createTextNode("Pre"));
+            checkboxContainer.appendChild(preCheckbox);
+            checkboxContainer.appendChild(document.createTextNode("Post"));
+            checkboxContainer.appendChild(postCheckbox);
+
+            modBox.appendChild(checkboxContainer);
+            rightContainer.appendChild(modBox);
+        });
+    }
 
     function downloadMPD() {
         window.location.href = "/download";
