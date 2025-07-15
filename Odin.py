@@ -148,23 +148,6 @@ def update_mod_selection():
 
     # Update the database via Thor.py
     taskDAO.update_mod_selection(modNumber, condition)
-
-    # Iterate over the self.mpd['mod'] column to check for matches
-    for index, row in taskDAO.mpd.iterrows():
-        mod_entries = row['mod']  # This is a list of dictionaries
-        applicability_text = str(row["APPLICABILITY"])  # Convert to string for modifications
-
-        for mod_dict in mod_entries:
-            if modNumber in mod_dict:
-                # Convert mod number back to Pre/Post format
-                mod_text = ("Post " if condition else "Pre ") + modNumber
-                
-                if mod_dict[modNumber] == condition:
-                    # Highlight in green if values match
-                    print(modNumber, condition, row["APPLICABILITY"])
-                #else:
-                    # Strike through if values do not match
-                    #print(modNumber, condition, row["APPLICABILITY"])
                 
     return jsonify({"success": True})
 

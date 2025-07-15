@@ -46,9 +46,9 @@ class TaskDAO:
         #print(self.mpd['type'])
     
     #########################################################################################
-    def modsChecker(self):   
+    def getModKeys(self):
         modPattern = re.compile(r'(\bPRE\b|\bPOST\b)\', \'(\d+)', re.IGNORECASE)
-
+        
         def Stormbreaker(mpdCondition):
             results = []
             for i in mpdCondition:
@@ -64,10 +64,6 @@ class TaskDAO:
             return results
 
         self.mpd['mod'] = self.mpd['condition'].apply(Stormbreaker)
-        #print(self.mpd['mod'])
-
-    def getModKeys(self):
-        self.modsChecker()  # Ensure mod keys are generated
         modCounter = Counter()
 
         for entry in self.mpd['mod']:  # Fix: Access the 'mod' column properly
