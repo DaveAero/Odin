@@ -1,6 +1,8 @@
 # Sensitive data
 .xlsx
 .xls
+\data\MPDA320_R49_I00.xls
+\data\mods.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

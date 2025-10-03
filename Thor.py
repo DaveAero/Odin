@@ -27,7 +27,7 @@ class TaskDAO:
         self.mpd = db.loki()
     
     #########################################################################################
-    def typeChecker(self):        
+    def getTypeKey(self):        
         typePattern = re.compile(r'(?<=\')\bA318\b|\bA319\b|\bA320\b|\bA321\b(?=\')', re.IGNORECASE)
         
         def Mjolnir(mpdCondition):
@@ -64,6 +64,7 @@ class TaskDAO:
             return results
 
         self.mpd['mod'] = self.mpd['condition'].apply(Stormbreaker)
+        #print(self.mpd['mod'])
         modCounter = Counter()
 
         for entry in self.mpd['mod']:  # Fix: Access the 'mod' column properly
